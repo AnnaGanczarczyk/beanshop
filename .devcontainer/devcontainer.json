@@ -1,0 +1,14 @@
+{
+  "name": "BeanShop QA Workshop",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "npm ci && npx playwright install --with-deps chromium",
+  "postStartCommand": "bash scripts/restart-app.sh",
+  "forwardPorts": [3000],
+  "portsAttributes": { "3000": { "label": "BeanShop", "onAutoForward": "openBrowser" } },
+  "customizations": {
+    "vscode": {
+      "extensions": ["GitHub.copilot-chat", "ms-playwright.playwright", "vitest.explorer"]
+    }
+  },
+  "hostRequirements": { "cpus": 2, "memory": "4gb" }
+}

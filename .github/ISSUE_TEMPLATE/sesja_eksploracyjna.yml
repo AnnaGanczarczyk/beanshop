@@ -1,0 +1,34 @@
+name: Sesja testów eksploracyjnych
+description: Raport z sesji (Session-Based Test Management)
+title: "[SESJA] "
+labels: ["sesja-eksploracyjna", "grupa-M"]
+body:
+  - type: textarea
+    id: charter
+    attributes:
+      label: Charter
+      description: "Eksploruj <obszar> używając <zasoby/heurystyki> aby odkryć <informacje/ryzyka>"
+    validations: { required: true }
+  - type: input
+    id: time
+    attributes:
+      label: Czas trwania i proporcje
+      placeholder: "30 min; testowanie 70% / zgłaszanie 20% / setup 10%"
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notatki z sesji
+      description: Co sprawdziłeś, jakimi danymi, co zaobserwowałeś.
+  - type: textarea
+    id: bugs
+    attributes:
+      label: Znalezione błędy
+      description: Linki do issues [BUG].
+  - type: textarea
+    id: questions
+    attributes:
+      label: Pytania i ryzyka
+  - type: textarea
+    id: next
+    attributes:
+      label: Propozycje kolejnych charterów

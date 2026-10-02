@@ -1,0 +1,58 @@
+name: Zgłoszenie błędu
+description: Defekt znaleziony podczas testów
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: grupa
+    attributes:
+      label: Grupa szkoleniowa
+      options: ["grupa-M (testerzy manualni)", "grupa-A (testerzy automatyzujący)"]
+    validations: { required: true }
+  - type: textarea
+    id: summary
+    attributes:
+      label: Podsumowanie
+      description: Jedno zdanie, co nie działa i gdzie.
+    validations: { required: true }
+  - type: input
+    id: rule
+    attributes:
+      label: Naruszona reguła / historyjka
+      placeholder: "BR-04 / US-06"
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Ważność
+      options: ["Krytyczna", "Wysoka", "Średnia", "Niska"]
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Kroki do odtworzenia
+      description: Dokładne dane (konto, produkty, ilości, kody).
+      value: |
+        1.
+        2.
+        3.
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes:
+      label: Oczekiwany wynik
+    validations: { required: true }
+  - type: textarea
+    id: actual
+    attributes:
+      label: Rzeczywisty wynik
+    validations: { required: true }
+  - type: textarea
+    id: technical
+    attributes:
+      label: Kontekst techniczny
+      description: Żądanie/odpowiedź API, logi, podejrzane miejsce w kodzie (plik:linia) wskazane przez Copilota i zweryfikowane przez Ciebie.
+  - type: input
+    id: env
+    attributes:
+      label: Środowisko
+      placeholder: "Codespace, branch main, Chrome 1xx"

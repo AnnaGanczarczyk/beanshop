@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BeanShop - sklep z kawą</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+<header><a class="logo" href="/">BeanShop</a><nav></nav></header>
+<main>
+  <h1>Kawa i akcesoria</h1>
+  <form class="searchbar" id="search-form" role="search">
+    <label for="q">Szukaj produktu</label>
+    <input id="q" name="q" type="search" placeholder="np. Kolumbia">
+    <label for="category">Kategoria</label>
+    <select id="category" name="category">
+      <option value="">Wszystkie</option><option value="kawa">Kawa</option><option value="akcesoria">Akcesoria</option>
+    </select>
+    <button type="submit">Szukaj</button>
+  </form>
+  <p id="search-error" class="error" role="alert"></p>
+  <div class="grid" id="products" data-testid="product-list"></div>
+</main>
+<script src="/app.js"></script>
+<script>
+const { api, money, toast, refreshBadge, renderHeader, simulatedLatency } = window.BeanShop;
+let me = null;
+
+async function load() {
+  const q = document.getElementById('q').value;
+  const category = document.getElementById('category').value;
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (category) params.set('category', category);
+  const errorEl = document.getElementById('search-error');
+  errorEl.textContent = '';
+  let products = [];
+  try { products = await api(`/products?${params}`); }
+  catch (e) { errorEl.textContent = e.message; }
+  const list = document.getElementById('products');
+  list.innerHTML = products.length ? '' : '<p data-testid="no-results">Brak produktów spełniających kryteria.</p>';
+  for (const p of products) {
+    const card = document.createElement('article');
+    card.className = 'card product';
+    card.dataset.testid = 'product-card';
+    card.innerHTML = `
+      <h2 class="product-name">${p.name}</h2>
+      <p>${p.description}</p>
+      <span class="price">${money(p.price)}</span>
+      ${p.stock === 0 ? '<span class="stock-out">Brak w magazynie</span>' : `<small>Dostępne: ${p.stock} szt.</small>`}
+      <button class="add-to-cart" ${p.stock === 0 ? 'disabled' : ''}>Dodaj do koszyka</button>`;
+    card.querySelector('button').addEventListener('click', async () => {
+      if (!me) { location.href = '/login?next=/'; return; }
+      try {
+        await api('/cart/items', { method: 'POST', body: { productId: p.id, quantity: 1 } });
+        toast(`Dodano do koszyka: ${p.name}`);
+        setTimeout(refreshBadge, simulatedLatency());
+      } catch (e) { toast(e.message); }
+    });
+    list.appendChild(card);
+  }
+}
+
+document.getElementById('search-form').addEventListener('submit', (e) => { e.preventDefault(); load(); });
+renderHeader().then((u) => { me = u; load(); });
+</script>
+</body>
+</html>

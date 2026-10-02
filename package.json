@@ -1,0 +1,38 @@
+{
+  "name": "beanshop-qa-workshop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BeanShop: aplikacja warsztatowa do szkolen GitHub Copilot dla testerow (Integrivo)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit && playwright test",
+    "test:unit": "vitest run",
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=e2e",
+    "test:mutation": "stryker run",
+    "report": "playwright show-report"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@faker-js/faker": "^10.6.0",
+    "@playwright/test": "^1.63.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.4",
+    "fast-check": "^4.10.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.0"
+  }
+}

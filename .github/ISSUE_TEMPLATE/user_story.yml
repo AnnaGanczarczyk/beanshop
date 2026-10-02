@@ -1,0 +1,15 @@
+name: Historyjka użytkownika
+description: Wymaganie w formie user story
+title: "[US-xx] "
+labels: ["user-story"]
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: Historyjka
+      value: "Jako ... chcę ... aby ..."
+    validations: { required: true }
+  - type: textarea
+    id: ac
+    attributes:
+      label: Kryteria akceptacji

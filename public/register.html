@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Rejestracja - BeanShop</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+<header><a class="logo" href="/">BeanShop</a><nav></nav></header>
+<main>
+  <h1>Załóż konto</h1>
+  <form class="stack" id="register-form" novalidate>
+    <label for="name">Imię i nazwisko</label>
+    <input id="name" name="name" required>
+    <label for="email">E-mail</label>
+    <input id="email" name="email" type="email" required>
+    <label for="password">Hasło</label>
+    <input id="password" name="password" type="password" aria-describedby="pwd-hint" required>
+    <small id="pwd-hint">8-64 znaki, co najmniej jedna wielka litera i jedna cyfra.</small>
+    <button type="submit">Załóż konto</button>
+    <div id="register-msg" role="alert"></div>
+  </form>
+</main>
+<script src="/app.js"></script>
+<script>
+const { api, renderHeader } = window.BeanShop;
+renderHeader();
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('register-msg');
+  msg.className = ''; msg.textContent = '';
+  try {
+    await api('/auth/register', { method: 'POST', body: { name: e.target.name.value, email: e.target.email.value, password: e.target.password.value } });
+    msg.className = 'ok';
+    msg.innerHTML = 'Konto utworzone. <a href="/login">Zaloguj się</a>';
+  } catch (err) {
+    msg.className = 'error';
+    msg.textContent = [err.message, ...(err.data?.details ?? [])].join('. ');
+  }
+});
+</script>
+</body>
+</html>

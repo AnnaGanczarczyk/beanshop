@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Zamówienia - BeanShop</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+<header><a class="logo" href="/">BeanShop</a><nav></nav></header>
+<main>
+  <h1>Zamówienia</h1>
+  <p id="created-msg" class="ok" role="status"></p>
+  <table data-testid="orders-table">
+    <thead><tr><th>Nr</th><th>Data</th><th>Kwota</th><th>Status</th><th>Akcje</th></tr></thead>
+    <tbody id="orders"></tbody>
+  </table>
+</main>
+<script src="/app.js"></script>
+<script>
+const { api, money, toast, renderHeader } = window.BeanShop;
+const LABELS = { NEW: 'Nowe', PAID: 'Opłacone', SHIPPED: 'Wysłane', DELIVERED: 'Dostarczone', CANCELLED: 'Anulowane' };
+let me = null;
+
+async function load() {
+  let orders;
+  try { orders = await api('/orders'); }
+  catch (e) { if (e.status === 401) location.href = '/login?next=/orders'; return; }
+  const tbody = document.getElementById('orders');
+  tbody.innerHTML = orders.length ? '' : '<tr><td colspan="5">Brak zamówień</td></tr>';
+  for (const o of orders.slice().reverse()) {
+    const tr = document.createElement('tr');
+    tr.dataset.orderId = o.id;
+    const actions = [];
+    if (o.status === 'NEW') actions.push('<button class="pay">Opłać</button>');
+    if (o.allowedNext.includes('CANCELLED')) actions.push('<button class="secondary cancel">Anuluj</button>');
+    if (me?.role === 'admin') {
+      const opts = o.allowedNext.map((s) => `<option value="${s}">${LABELS[s]}</option>`).join('');
+      if (opts) actions.push(`<label>Zmień status <select class="admin-status"><option value="">-</option>${opts}</select></label>`);
+    }
+    tr.innerHTML = `<td>#${o.id}</td><td>${new Date(o.createdAt).toLocaleString('pl-PL')}</td><td>${money(o.summary.total)}</td>
+      <td class="status" data-testid="order-status">${LABELS[o.status]}</td><td>${actions.join(' ')}</td>`;
+    tr.querySelector('.pay')?.addEventListener('click', () => act(`/orders/${o.id}/pay`, 'POST'));
+    tr.querySelector('.cancel')?.addEventListener('click', () => { if (confirm(`Anulować zamówienie #${o.id}?`)) act(`/orders/${o.id}/cancel`, 'POST'); });
+    tr.querySelector('.admin-status')?.addEventListener('change', (e) => e.target.value && act(`/orders/${o.id}/status`, 'PATCH', { status: e.target.value }));
+    tbody.appendChild(tr);
+  }
+}
+
+async function act(path, method, body) {
+  try { await api(path, { method, body }); } catch (e) { toast(e.message); }
+  load();
+}
+
+const created = new URLSearchParams(location.search).get('created');
+if (created) document.getElementById('created-msg').textContent = `Dziękujemy! Zamówienie #${created} zostało złożone.`;
+renderHeader().then((u) => { me = u; load(); });
+</script>
+</body>
+</html>

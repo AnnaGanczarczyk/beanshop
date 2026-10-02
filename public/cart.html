@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Koszyk - BeanShop</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+<header><a class="logo" href="/">BeanShop</a><nav></nav></header>
+<main>
+  <h1>Koszyk</h1>
+  <div id="cart-empty" hidden><p>Twój koszyk jest pusty. <a href="/">Przejdź do sklepu</a></p></div>
+  <section id="cart" hidden>
+    <table data-testid="cart-table">
+      <thead><tr><th>Produkt</th><th>Cena</th><th>Ilość</th><th>Wartość</th><th></th></tr></thead>
+      <tbody id="cart-lines"></tbody>
+    </table>
+
+    <form id="discount-form" class="searchbar" style="margin-top:16px">
+      <label for="code">Kod rabatowy</label>
+      <input id="code" name="code" placeholder="np. KAWA10">
+      <button type="submit">Zastosuj</button>
+      <button type="button" class="secondary" id="remove-codes" hidden>Usuń kody</button>
+    </form>
+    <p id="discount-msg"></p>
+
+    <fieldset style="max-width:380px;margin-left:auto;border:0;padding:0">
+      <legend>Dostawa</legend>
+      <label><input type="radio" name="shipping" value="STANDARD"> Kurier standard (14,99 zł, darmowa od 200 zł)</label><br>
+      <label><input type="radio" name="shipping" value="EXPRESS"> Kurier express (24,99 zł)</label>
+    </fieldset>
+
+    <div class="summary" data-testid="cart-summary">
+      <div><span>Wartość produktów</span><span data-testid="subtotal"></span></div>
+      <div><span>Rabat <small id="codes"></small></span><span data-testid="discount"></span></div>
+      <div><span>Dostawa</span><span data-testid="shipping"></span></div>
+      <div class="total"><span>Do zapłaty</span><span data-testid="total"></span></div>
+      <button id="checkout" style="width:100%;margin-top:12px">Złóż zamówienie</button>
+    </div>
+  </section>
+</main>
+<script src="/app.js"></script>
+<script>
+const { api, money, toast, renderHeader, refreshBadge } = window.BeanShop;
+
+function render(cart) {
+  const empty = cart.items.length === 0;
+  document.getElementById('cart-empty').hidden = !empty;
+  document.getElementById('cart').hidden = empty;
+  const tbody = document.getElementById('cart-lines');
+  tbody.innerHTML = '';
+  for (const line of cart.items) {
+    const tr = document.createElement('tr');
+    tr.className = 'cart-line';
+    tr.dataset.productId = line.productId;
+    tr.innerHTML = `
+      <td class="line-name">${line.name}</td>
+      <td>${money(line.unitPrice)}</td>
+      <td><input class="qty" type="number" min="1" max="10" value="${line.quantity}" style="width:70px"></td>
+      <td class="line-total">${money(line.lineTotal)}</td>
+      <td><button class="secondary remove">Usuń</button></td>`;
+    tr.querySelector('.qty').addEventListener('change', async (e) => {
+      try { render(await api(`/cart/items/${line.productId}`, { method: 'PATCH', body: { quantity: Number(e.target.value) } })); }
+      catch (err) { toast(err.message); load(); }
+    });
+    tr.querySelector('.remove').addEventListener('click', async () => render(await api(`/cart/items/${line.productId}`, { method: 'DELETE' })));
+    tbody.appendChild(tr);
+  }
+  const s = cart.summary;
+  document.querySelector('[data-testid="subtotal"]').textContent = money(s.subtotal);
+  document.querySelector('[data-testid="discount"]').textContent = s.discount ? `-${money(s.discount)}` : money(0);
+  document.querySelector('[data-testid="shipping"]').textContent = s.shipping === 0 ? 'Gratis' : money(s.shipping);
+  document.querySelector('[data-testid="total"]').textContent = money(s.total);
+  document.getElementById('codes').textContent = s.appliedCodes.length ? `(${s.appliedCodes.join(', ')})` : '';
+  document.getElementById('remove-codes').hidden = s.appliedCodes.length === 0;
+  document.querySelectorAll('input[name="shipping"]').forEach((r) => { r.checked = r.value === cart.shipping; });
+  refreshBadge();
+}
+
+async function load() {
+  try { render(await api('/cart')); }
+  catch (e) { if (e.status === 401) location.href = '/login?next=/cart'; }
+}
+
+document.getElementById('discount-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('discount-msg');
+  try {
+    render(await api('/cart/discount', { method: 'POST', body: { code: e.target.code.value } }));
+    msg.className = 'ok'; msg.textContent = 'Kod został zastosowany';
+    e.target.code.value = '';
+  } catch (err) { msg.className = 'error'; msg.textContent = err.message; }
+});
+document.getElementById('remove-codes').addEventListener('click', async () => render(await api('/cart/discount', { method: 'DELETE' })));
+document.querySelectorAll('input[name="shipping"]').forEach((r) => r.addEventListener('change', async () => {
+  render(await api('/cart/shipping', { method: 'PUT', body: { method: r.value } }));
+}));
+document.getElementById('checkout').addEventListener('click', async () => {
+  try {
+    const order = await api('/orders', { method: 'POST' });
+    location.href = `/orders?created=${order.id}`;
+  } catch (err) { toast(err.message); }
+});
+
+renderHeader().then(load);
+</script>
+</body>
+</html>
